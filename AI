@@ -1,0 +1,52 @@
+//@version=4
+strategy("Candlestick Patterns and Trend Lines Strategy", overlay=true)
+
+// Define input variables
+highLevel = input(title="High Level", type=input.float, defval=100.0)
+lowLevel = input(title="Low Level", type=input.float, defval=0.0)
+
+// Candlestick patterns to spot price reversals
+bool hammer = (low < open and open > close and close == low) // Hammer pattern
+bool invertedHammer = (high > open and open < close and close == high) // Inverted hammer pattern
+bool shootingStar = (high > open and open > close and close < open[1]) // Shooting star pattern
+bool eveningStar = (low < open and open < close and close > open[1]) // Evening star pattern
+
+// Draw trend lines on the chart
+trendUp = rising(low, 30) // Upward trend line
+trendDown = falling(high, 30) // Downward trend line
+
+// Define trade signals
+longSignal = (hammer or invertedHammer) and trendUp // Long signal
+shortSignal = (shootingStar or eveningStar) and trendDown // Short signal
+
+// Calculate stop loss and take profit levels
+stopLoss = highLevel // Stop loss level
+takeProfit = lowLevel // Take profit level
+
+// Enter long position
+if (longSignal)
+    strategy.entry("Long", strategy.long)
+
+// Enter short position
+if (shortSignal)
+    strategy.entry("Short", strategy.short)
+
+// Exit position based on stop loss or take profit levels
+strategy.exit("Exit", "Long", loss=stopLoss, profit=takeProfit)
+strategy.exit("Exit", "Short", loss=stopLoss, profit=takeProfit)
+
+// Plot trend lines on the chart
+plot(trendUp ? low : na, color=color.green, style=plot.style_linebr, title="Upward Trend")
+plot(trendDown ? high : na, color=color.red, style=plot.style_linebr, title="Downward Trend")
+
+// Plot potential price reversals on the chart
+plotshape(hammer, style=shape.arrowup, location=location.abovebar, color=color.green, title="Hammer") // Hammer pattern
+plotshape(invertedHammer, style=shape.arrowdown, location=location.abovebar, color=color.red, title="Inverted Hammer") // Inverted hammer pattern
+plotshape(shootingStar, style=shape.arrowdown, location=location.abovebar, color=color.red, title="Shooting Star") // Shooting star pattern
+plotshape(eveningStar, style=shape.arrowup, location=location.abovebar, color=color.green, title="Evening Star") // Evening star pattern
+
+// Use risk management principles to identify stop loss and take profit signals
+stopLossSignal = crossover(highLevel, close) // Signal for stop loss
+takeProfitSignal = crossunder(lowLevel, close) // Signal for take profit
+plotshape(stopLossSignal, style=shape.circle, location=location.belowbar, color=color.red, title="Stop Loss") // Plot stop loss signal
+plotshape(takeProfitSignal, style=shape.circle, location=location.abovebar, color=color.green, title="Take Profit") // Plot take profit signal
